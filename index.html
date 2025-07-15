@@ -1,0 +1,251 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Darknes Hub - Rbx Tools</title>
+  <style>
+    :root {
+      --bg: #000;
+      --text: #fff;
+      --accent: #5865F2;
+      --card: #111;
+    }
+
+    body.light {
+      --bg: #f9f9f9;
+      --text: #000;
+      --accent: #005eff;
+      --card: #fff;
+    }
+
+    body.green {
+      --bg: #0e1d0e;
+      --text: #c6f6c6;
+      --accent: #1ed760;
+      --card: #1b3521;
+    }
+
+    body.midnight {
+      --bg: #0a0c1b;
+      --text: #d0d7ff;
+      --accent: #3b4cc0;
+      --card: #121933;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      transition: background 0.4s, color 0.4s;
+    }
+
+    canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: -1;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 2.5em;
+      margin-top: 20px;
+    }
+
+    .center, .section {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .discord-btn {
+      background-color: var(--accent);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      font-size: 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin: 10px 0;
+    }
+
+    .section {
+      background-color: var(--card);
+      margin-top: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.3);
+    }
+
+    label {
+      font-size: 20px;
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
+      margin-bottom: 10px;
+      border: none;
+      border-radius: 5px;
+    }
+
+    .output-box {
+      background-color: #333;
+      padding: 10px;
+      border-radius: 5px;
+      font-family: monospace;
+      color: white;
+    }
+
+    .copy-btn {
+      background: #444;
+      color: white;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    select, .theme-select {
+      padding: 8px;
+      font-size: 14px;
+      border-radius: 5px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="bg"></canvas>
+  <h1>Darknes Hub - Rbx Tools</h1>
+  <div class="center">
+    <a href="https://discord.gg/eGzMUy867p" target="_blank">
+      <button class="discord-btn">Discord</button>
+    </a>
+    <br>
+    <label for="shortener">Escolher encurtador:</label>
+    <select id="shortener">
+      <option value="isgd">is.gd</option>
+      <option value="urlgratis">url.gratis</option>
+    </select>
+
+    <label for="theme" style="margin-top:20px;">Tema:</label>
+    <select id="theme" class="theme-select">
+      <option value="dark">Escuro</option>
+      <option value="light">Claro</option>
+      <option value="green">Verde</option>
+      <option value="midnight">Meia-noite</option>
+    </select>
+  </div>
+
+  <div class="section">
+    <label>Profile Link</label>
+    <input type="text" id="profileInput" placeholder="Cole o link do perfil aqui">
+    <div class="output-box" id="profileOutput">[https://www.roblox.com/users/11804175/profile](https://is.gd/xxx)</div>
+    <button class="copy-btn" onclick="generateLink('profile')">Copiar</button>
+  </div>
+
+  <div class="section">
+    <label>Server VIP</label>
+    <input type="text" id="serverInput" placeholder="Cole o link do servidor aqui">
+    <div class="output-box" id="serverOutput">[https://www.roblox.com/share?code=...](https://is.gd/xxx)</div>
+    <button class="copy-btn" onclick="generateLink('server')">Copiar</button>
+  </div>
+
+  <script>
+    function setTheme(theme) {
+      document.body.className = theme;
+      localStorage.setItem('theme', theme);
+    }
+
+    document.getElementById('theme').addEventListener('change', function() {
+      setTheme(this.value);
+    });
+
+    window.onload = () => {
+      const savedTheme = localStorage.getItem('theme') || 'dark';
+      document.getElementById('theme').value = savedTheme;
+      setTheme(savedTheme);
+    };
+
+    async function generateLink(type) {
+      const input = document.getElementById(type + 'Input').value.trim();
+      const output = document.getElementById(type + 'Output');
+      const encurtador = document.getElementById('shortener').value;
+
+      if (!input.startsWith("http")) {
+        alert("Insira um link válido começando com http");
+        return;
+      }
+
+      try {
+        let shortUrl = "";
+        if (encurtador === "isgd") {
+          const res = await fetch(`https://is.gd/create.php?format=simple&url=${encodeURIComponent(input)}`);
+          shortUrl = await res.text();
+        } else {
+          const res = await fetch("https://url.gratis/api/v1/shorten", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ url: input })
+          });
+          const data = await res.json();
+          shortUrl = data.shortenedUrl || data.shortUrl || data.url || "erro";
+        }
+
+        output.innerHTML = `[${input}](${shortUrl})`;
+        await navigator.clipboard.writeText(shortUrl);
+        alert("✅ Link copiado: " + shortUrl);
+      } catch {
+        output.textContent = "Erro ao encurtar o link.";
+      }
+    }
+
+    // Animação de fundo sólida com 2 cores
+    const canvas = document.getElementById("bg");
+    const ctx = canvas.getContext("2d");
+    let w = canvas.width = window.innerWidth;
+    let h = canvas.height = window.innerHeight;
+    const dots = Array.from({ length: 50 }, () => ({
+      x: Math.random() * w,
+      y: Math.random() * h,
+      vx: Math.random() * 1 - 0.5,
+      vy: Math.random() * 1 - 0.5
+    }));
+
+    function animate() {
+      ctx.clearRect(0, 0, w, h);
+      dots.forEach((p, i) => {
+        p.x += p.vx;
+        p.y += p.vy;
+        if (p.x < 0 || p.x > w) p.vx *= -1;
+        if (p.y < 0 || p.y > h) p.vy *= -1;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 3, 0, 2 * Math.PI);
+        ctx.fillStyle = i % 2 === 0 ? "#5865F2" : "#1ed760";
+        ctx.fill();
+
+        for (let j = i + 1; j < dots.length; j++) {
+          const q = dots[j];
+          const dx = p.x - q.x;
+          const dy = p.y - q.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < 100) {
+            ctx.beginPath();
+            ctx.moveTo(p.x, p.y);
+            ctx.lineTo(q.x, q.y);
+            ctx.strokeStyle = "rgba(255,255,255,0.1)";
+            ctx.stroke();
+          }
+        }
+      });
+      requestAnimationFrame(animate);
+    }
+    animate();
+  </script>
+</body>
+</html>
