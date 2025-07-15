@@ -123,76 +123,32 @@
   </div>
 
   <script>
-    async function generateLink(type) {
-      const input = document.getElementById(type + 'Input').value;
-      const output = document.getElementById(type + 'Output');
+  async function generateLink(type) {
+    const input = document.getElementById(type + 'Input').value.trim();
+    const output = document.getElementById(type + 'Output');
 
-      if (!input || !input.startsWith("http")) {
-        alert("Insira um link válido começando com http");
-        return;
-      }
-
-      try {
-        const response = await fetch(`https://is.gd/create.php?format=simple&url=${encodeURIComponent(input)}`);
-        const shortUrl = await response.text();
-        output.innerHTML = `[${input}](${shortUrl})`;
-
-        // Copia o link encurtado
-        navigator.clipboard.writeText(shortUrl);
-        alert("Link encurtado copiado: " + shortUrl);
-      } catch (error) {
-        output.textContent = "Erro ao encurtar o link.";
-      }
+    if (!input.startsWith("http")) {
+      alert("Insira um link válido começando com http");
+      return;
     }
 
-    // Animação de fundo: bolas conectadas
-    const canvas = document.getElementById("bg");
-    const ctx = canvas.getContext("2d");
-    let width = canvas.width = window.innerWidth;
-    let height = canvas.height = window.innerHeight;
+    try {
+      const response = await fetch(`https://api.shrtco.de/v2/shorten?url=${encodeURIComponent(input)}`);
+      const data = await response.json();
 
-    const balls = Array.from({ length: 60 }, () => ({
-      x: Math.random() * width,
-      y: Math.random() * height,
-      vx: (Math.random() - 0.5) * 0.8,
-      vy: (Math.random() - 0.5) * 0.8,
-      r: 2 + Math.random() * 2
-    }));
+      if (!data.ok) throw new Error();
 
-    function draw() {
-      ctx.clearRect(0, 0, width, height);
-      for (let i = 0; i < balls.length; i++) {
-        const a = balls[i];
-        ctx.beginPath();
-        ctx.arc(a.x, a.y, a.r, 0, Math.PI * 2);
-        ctx.fillStyle = "white";
-        ctx.fill();
+      const shortUrl = data.result.full_short_link;
+      output.innerHTML = `[${input}](${shortUrl})`;
 
-        for (let j = i + 1; j < balls.length; j++) {
-          const b = balls[j];
-          const dx = a.x - b.x;
-          const dy = a.y - b.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < 100) {
-            ctx.beginPath();
-            ctx.moveTo(a.x, a.y);
-            ctx.lineTo(b.x, b.y);
-            ctx.strokeStyle = "rgba(255,255,255,0.1)";
-            ctx.stroke();
-          }
-        }
-
-        a.x += a.vx;
-        a.y += a.vy;
-
-        if (a.x < 0 || a.x > width) a.vx *= -1;
-        if (a.y < 0 || a.y > height) a.vy *= -1;
-      }
-
-      requestAnimationFrame(draw);
+      await navigator.clipboard.writeText(shortUrl);
+      alert("✅ Link encurtado copiado com sucesso:\n" + shortUrl);
+    } catch (error) {
+      output.textContent = "Erro ao encurtar o link. Tente novamente.";
     }
+  }
 
-    draw();
+  // ⚠️ Não remova o restante do script (a animação das bolas deve continuar funcionando abaixo)
   </script>
 </body>
       </html>
