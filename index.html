@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
   <title>Darknes Hub - Rbx Tools</title>
@@ -9,7 +9,7 @@
       padding: 0;
       background-color: #000;
       color: white;
-      font-family: 'Arial', sans-serif;
+      font-family: Arial, sans-serif;
       overflow-x: hidden;
     }
 
@@ -54,6 +54,12 @@
       font-size: 20px;
       display: block;
       margin-top: 10px;
+    }
+
+    small {
+      display: block;
+      margin-bottom: 5px;
+      color: #aaa;
     }
 
     input[type="text"] {
@@ -117,38 +123,85 @@
     <small>link</small>
     <input type="text" id="serverInput" placeholder="Cole seu link aqui">
     <div class="output-box" id="serverOutput">
-      [https://www.roblox.com/share?code=xxx&type=Server](https://is.gd/xxx)
+      [https://www.roblox.com/share?code=26060ea909726140825b51c47c6897c7&type=Server](https://is.gd/xxx)
     </div>
     <button class="copy-btn" onclick="generateLink('server')">Copiar</button>
   </div>
 
   <script>
-  async function generateLink(type) {
-    const input = document.getElementById(type + 'Input').value.trim();
-    const output = document.getElementById(type + 'Output');
+    async function generateLink(type) {
+      const input = document.getElementById(type + 'Input').value.trim();
+      const output = document.getElementById(type + 'Output');
 
-    if (!input.startsWith("http")) {
-      alert("Insira um link válido começando com http");
-      return;
+      if (!input.startsWith("http")) {
+        alert("Insira um link válido começando com http");
+        return;
+      }
+
+      try {
+        const response = await fetch(`https://api.shrtco.de/v2/shorten?url=${encodeURIComponent(input)}`);
+        const data = await response.json();
+
+        if (!data.ok) throw new Error();
+
+        const shortUrl = data.result.full_short_link;
+        output.innerHTML = `[${input}](${shortUrl})`;
+
+        await navigator.clipboard.writeText(shortUrl);
+        alert("✅ Link encurtado copiado com sucesso:\n" + shortUrl);
+      } catch (error) {
+        output.textContent = "Erro ao encurtar o link. Tente novamente.";
+      }
     }
 
-    try {
-      const response = await fetch(`https://api.shrtco.de/v2/shorten?url=${encodeURIComponent(input)}`);
-      const data = await response.json();
+    // Fundo com bolas e linhas animadas
+    const canvas = document.getElementById("bg");
+    const ctx = canvas.getContext("2d");
+    let width = canvas.width = window.innerWidth;
+    let height = canvas.height = window.innerHeight;
 
-      if (!data.ok) throw new Error();
+    const balls = Array.from({ length: 60 }, () => ({
+      x: Math.random() * width,
+      y: Math.random() * height,
+      vx: (Math.random() - 0.5) * 0.8,
+      vy: (Math.random() - 0.5) * 0.8,
+      r: 2 + Math.random() * 2
+    }));
 
-      const shortUrl = data.result.full_short_link;
-      output.innerHTML = `[${input}](${shortUrl})`;
+    function draw() {
+      ctx.clearRect(0, 0, width, height);
+      for (let i = 0; i < balls.length; i++) {
+        const a = balls[i];
+        ctx.beginPath();
+        ctx.arc(a.x, a.y, a.r, 0, Math.PI * 2);
+        ctx.fillStyle = "white";
+        ctx.fill();
 
-      await navigator.clipboard.writeText(shortUrl);
-      alert("✅ Link encurtado copiado com sucesso:\n" + shortUrl);
-    } catch (error) {
-      output.textContent = "Erro ao encurtar o link. Tente novamente.";
+        for (let j = i + 1; j < balls.length; j++) {
+          const b = balls[j];
+          const dx = a.x - b.x;
+          const dy = a.y - b.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < 100) {
+            ctx.beginPath();
+            ctx.moveTo(a.x, a.y);
+            ctx.lineTo(b.x, b.y);
+            ctx.strokeStyle = "rgba(255,255,255,0.1)";
+            ctx.stroke();
+          }
+        }
+
+        a.x += a.vx;
+        a.y += a.vy;
+
+        if (a.x < 0 || a.x > width) a.vx *= -1;
+        if (a.y < 0 || a.y > height) a.vy *= -1;
+      }
+
+      requestAnimationFrame(draw);
     }
-  }
 
-  // ⚠️ Não remova o restante do script (a animação das bolas deve continuar funcionando abaixo)
+    draw();
   </script>
 </body>
-      </html>
+</html>
